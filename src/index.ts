@@ -1,51 +1,41 @@
-#!/usr/bin/env bun
 /**
- * docker-ip-whitelist - docker ip whitelist implementation
- * Built by Retsumdk
+ * docker-ip-whitelist — public library API. Built by Retsumdk.
  */
-
-import { Command } from "commander";
-import { existsSync, readFileSync } from "fs";
-import { join } from "path";
-
-interface Config {
-  apiKey?: string;
-  baseUrl: string;
-  timeout: number;
-  retries: number;
-}
-
-const DEFAULTS: Config = {
-  baseUrl: "https://api.example.com",
-  timeout: 30000,
-  retries: 3,
-};
-
-function loadConfig(): Config {
-  const cfgPath = join(process.cwd(), "config.json");
-  if (existsSync(cfgPath)) {
-    try {
-      return { ...DEFAULTS, ...JSON.parse(readFileSync(cfgPath, "utf-8")) };
-    } catch { /* ignore */ }
-  }
-  return { ...DEFAULTS };
-}
-
-async function main(cfg: Config) {
-  console.log(`[${name}] Connected to ${cfg.baseUrl}`);
-  console.log(`[${name}] Timeout: ${cfg.timeout}ms | Retries: ${cfg.retries}`);
-  // TODO: implement your logic here
-  console.log(`[${name}] Done.`);
-}
-
-const program = new Command();
-program.name("docker-ip-whitelist").description("docker ip whitelist implementation").version("1.0.0")
-  .option("-c, --config <path>", "Config file path", "config.json")
-  .option("-v, --verbose", "Verbose mode")
-  .action(async (opts) => {
-    const cfg = loadConfig();
-    if (opts.verbose) console.log("Verbose mode on");
-    try { await main(cfg); }
-    catch (e) { console.error(`Error: ${e}`); process.exit(1); }
-  });
-program.parse(process.argv);
+export type {
+  IpRule,
+  DefaultPolicy,
+  SyncOptions,
+  Plan,
+  SyncReport,
+  StateFile,
+} from "./types.js";
+export {
+  parseIpv4,
+  isIpv4,
+  uint32ToIp,
+  parseCidr,
+  normalizeCidr,
+  cidrContains,
+  cidrSize,
+} from "./ip.js";
+export {
+  Whitelist,
+  parseRulesFile,
+  type CheckResult,
+  type AllowedIp,
+  type DeniedIp,
+  type ImportReport,
+} from "./whitelist.js";
+export { RULES_HEADER, loadRules, saveRules, type LoadedRules } from "./rules-file.js";
+export { DEFAULT_CHAIN, buildPlan, renderPlan, applyPlan, successful } from "./iptables.js";
+export { STATE_FORMAT, saveState, loadState } from "./state.js";
+export { shellRunner, sync, rollback, type EngineDeps } from "./engine.js";
+export {
+  runCli,
+  main,
+  USAGE,
+  EXIT_OK,
+  EXIT_ERROR,
+  EXIT_DENIED,
+  type CliIo,
+} from "./cli.js";
