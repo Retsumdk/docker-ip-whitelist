@@ -52,5 +52,16 @@ jobs:
         run: |
           gh release view "$TAG" > /dev/null 2>&1 \
             || gh release create "$TAG" --title "$TAG" --generate-notes --verify-tag
-          gh release upload "$TAG" dist/diw.mjs dist/diw.mjs.sha256 --clobber
+          # uploads.github.com answers HTTP 500 occasionally; retry rather than fail the release
+          for attempt in 1 2 3 4; do
+            if gh release upload "$TAG" dist/diw.mjs dist/diw.mjs.sha256 --clobber; then
+              break
+            fi
+            if [ "$attempt" = 4 ]; then
+              echo "asset upload failed after $attempt attempts"
+              exit 1
+            fi
+            echo "asset upload attempt $attempt failed, retrying in ${attempt}0s"
+            sleep "${attempt}0"
+          done
           echo "Privileged apply is not exercised here on purpose: it rewrites live firewall state." >> "$GITHUB_STEP_SUMMARY"
