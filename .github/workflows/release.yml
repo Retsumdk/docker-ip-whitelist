@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run typecheck:tests
+      - run: bun test
+
+      - name: Build the single-file bundle
+        run: bun run build:bundle
+
+      - name: Smoke-test what will be published
+        run: |
+          node dist/diw.mjs --help > /dev/null
+          node dist/diw.mjs demo > /dev/null
+          printf '10.0.0.0/24\n203.0.113.7\n' > /tmp/ip-whitelist.txt
+          node dist/diw.mjs check 10.0.0.42 --file /tmp/ip-whitelist.txt
+          set +e
+          node dist/diw.mjs check 192.0.2.99 --file /tmp/ip-whitelist.txt
+          code=$?
+          set -e
+          test "$code" -eq 2 || { echo "expected exit 2 for a denied IP, got $code"; exit 1; }
+
+      - name: Checksum
+        working-directory: dist
+        run: sha256sum diw.mjs > diw.mjs.sha256
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" > /dev/null 2>&1 \
+            || gh release create "$TAG" --title "$TAG" --generate-notes --verify-tag
+          gh release upload "$TAG" dist/diw.mjs dist/diw.mjs.sha256 --clobber
+          echo "Privileged apply is not exercised here on purpose: it rewrites live firewall state." >> "$GITHUB_STEP_SUMMARY"

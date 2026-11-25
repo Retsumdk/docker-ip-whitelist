@@ -26,3 +26,6 @@ jobs:
       - run: bun run build
       - run: node dist/cli.js --help > /dev/null
       - run: node dist/cli.js demo
+      - run: bun run build:bundle
+      - run: node dist/diw.mjs --help > /dev/null
+      - run: node dist/diw.mjs demo

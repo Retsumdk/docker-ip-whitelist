@@ -41,6 +41,30 @@ Requires Node >= 18.17. Applying rules touches live firewall state and needs
 root (or `CAP_NET_ADMIN`); everything else — planning, checking, importing —
 is unprivileged.
 
+### Zero-install: one file, no npm
+
+Every release ships `diw.mjs` — the whole CLI bundled into a single
+dependency-free file (~13 KB) that runs on the same Node >= 18.17. Nothing to
+build, no `node_modules`, no package manager:
+
+```bash
+curl -fsSL https://github.com/Retsumdk/docker-ip-whitelist/releases/latest/download/diw.mjs -o /usr/local/bin/diw
+chmod +x /usr/local/bin/diw
+diw --help
+```
+
+Check the download against the published checksum before running it as root:
+
+```bash
+cd /tmp
+curl -fsSLO https://github.com/Retsumdk/docker-ip-whitelist/releases/latest/download/diw.mjs
+curl -fsSLO https://github.com/Retsumdk/docker-ip-whitelist/releases/latest/download/diw.mjs.sha256
+sha256sum -c diw.mjs.sha256
+```
+
+Swap `latest/download` for `download/v1.0.0` to pin a version instead of
+tracking the newest release.
+
 ## Quick start
 
 ```bash

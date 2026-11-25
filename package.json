@@ -39,7 +39,8 @@
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "typecheck:tests": "tsc -p tsconfig.test.json --noEmit",
-    "demo": "node dist/cli.js demo"
+    "demo": "node dist/cli.js demo",
+    "build:bundle": "bun build src/cli.ts --target node --format esm --minify --outfile dist/diw.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
